@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Vendedores COLEX</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#242424">
+  <link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+  <link rel="stylesheet" href="assets/css/app.css">
+  <style>
+    .vend { max-width: 760px; padding-block: 28px 48px; display: grid; gap: 18px; }
+    .vend h1 { margin: 0; font-family: var(--display); font-size: 30px; letter-spacing: .02em; }
+    .vend .lead { margin: 0; color: var(--muted); max-width: 60ch; }
+    .linkrow { display: flex; gap: 8px; flex-wrap: wrap; }
+    .linkrow input { flex: 1 1 260px; min-width: 0; min-height: 44px; border: 1px solid var(--line); border-radius: 8px; padding: 0 12px; font-family: var(--mono); font-size: 14px; background: var(--soft); }
+    .share { display: grid; grid-template-columns: 220px 1fr; gap: 20px; align-items: start; }
+    .share .qr { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+    .share .qr svg { width: 100%; height: auto; display: block; }
+    .who { display: flex; align-items: center; gap: 12px; }
+    .who .advisor-avatar { width: 48px; height: 48px; font-size: 20px; }
+    .wa { background: #1f8a4c; color: #fff; }
+    .wa:hover { background: #18703d; }
+    @media (max-width: 640px) { .share { grid-template-columns: 1fr; } .share .qr { max-width: 240px; } }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></symbol>
+  </svg>
+  <div class="demo-flag" id="demoFlag" hidden>Modo demostración</div>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="./">
+        <img class="brand-logo" src="assets/img/logo-colex.jpg" alt="COLEX International" width="226" height="84">
+        <span class="brand-text"><span class="brand-sub">Inicio para vendedores</span></span>
+      </a>
+    </div>
+  </header>
+
+  <main class="wrap vend">
+    <div>
+      <h1>Su enlace personal del catálogo</h1>
+      <p class="lead">Elija su nombre. Obtendrá un enlace y un código QR propios: el cliente que entre por ahí verá que usted es su asesor, y su solicitud de cotización llegará a su nombre.</p>
+    </div>
+
+    <div class="box"><div class="box-body">
+      <div class="field"><label for="vSel">Vendedor</label><select id="vSel"><option value="">Cargando…</option></select></div>
+      <p class="small" id="vEmpty" hidden style="margin:0">Todavía no hay vendedores registrados. El administrador los agrega en el panel, en <b>Ajustes y QR › Vendedores</b>.</p>
+    </div></div>
+
+    <div class="box" id="vOut" hidden>
+      <div class="box-head">
+        <div class="who"><span class="advisor-avatar" id="vAvatar"></span><div><div class="small">Asesor</div><b id="vName"></b></div></div>
+      </div>
+      <div class="box-body">
+        <div class="field">
+          <label for="vLang">Idioma del catálogo para el cliente</label>
+          <div class="seg" role="group" aria-label="Idioma" style="max-width:280px">
+            <button type="button" data-l="es" aria-pressed="true">Español</button>
+            <button type="button" data-l="en" aria-pressed="false">English</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="vLink">Enlace para el cliente</label>
+          <div class="linkrow"><input id="vLink" readonly><button type="button" class="btn btn-navy" id="vCopy">Copiar enlace</button></div>
+        </div>
+        <div class="share">
+          <div class="qr" id="vQr"></div>
+          <div style="display:grid;gap:10px;align-content:start">
+            <a class="btn wa" id="vWa" target="_blank" rel="noopener">Enviar por WhatsApp</a>
+            <button type="button" class="btn btn-ghost" id="vPng"><svg class="icon"><use href="#i-down"/></svg>Descargar QR (PNG)</button>
+            <a class="btn btn-ghost" id="vOpen" target="_blank" rel="noopener">Ver el catálogo como lo verá el cliente</a>
+            <p class="small" style="margin:0">El enlace no cambia: puede guardarlo, ponerlo en su estado de WhatsApp o imprimir el QR en su tarjeta.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast" hidden role="status"></div>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/i18n.js"></script>
+  <script src="assets/vendor/supabase.js"></script>
+  <script src="assets/js/store.js"></script>
+  <script src="assets/js/export.js"></script>
+  <script src="assets/vendor/qrcode.js"></script>
+  <script>
+  (function () {
+    const store = window.ColexStore, $ = (id) => document.getElementById(id);
+    const KEY = "colex_vendor_self", SHOWS = !!(window.COLEX_CONFIG || {}).MOSTRAR_EXISTENCIAS;
+    let vendors = [], lang = "es";
+    let tt; function toast(m) { const t = $("toast"); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => (t.hidden = true), 2200); }
+    const base = new URL("./", location.href).href.replace(/^file:.*$/, "https://colex-international-s-a.github.io/catalogo-colex/");
+    function linkFor(v) { return base + "?v=" + encodeURIComponent(v.slug) + (lang === "en" ? "&lang=en" : ""); }
+    function qr(text) { const q = window.qrcode(0, "M"); q.addData(text, "Byte"); q.make(); return q; }
+    function svg(q, s) {
+      const n = q.getModuleCount(), m = 4, size = (n + m * 2) * s; let d = "";
+      for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${(c + m) * s} ${(r + m) * s}h${s}v${s}h-${s}z`;
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#1a1a1a"/></svg>`;
+    }
+    function render() {
+      const v = vendors.find((x) => x.slug === $("vSel").value);
+      $("vOut").hidden = !v; if (!v) return;
+      try { localStorage.setItem(KEY, v.slug); } catch (e) {}
+      const url = linkFor(v);
+      $("vName").textContent = v.nombre;
+      $("vAvatar").textContent = v.nombre.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
+      $("vLink").value = url; $("vOpen").href = url;
+      $("vQr").innerHTML = svg(qr(url), 6);
+      const msg = lang === "en"
+        ? `Hello! I am ${v.nombre} from COLEX International. Here is our product catalog${SHOWS ? " with current stock" : ""}. Choose what you need and send me your quotation request: ${url}`
+        : `¡Hola! Soy ${v.nombre}, de COLEX International. Le comparto nuestro catálogo${SHOWS ? " con existencias actualizadas" : ""}. Elija lo que necesita y envíeme su solicitud de cotización: ${url}`;
+      $("vWa").href = "https://wa.me/?text=" + encodeURIComponent(msg);
+    }
+    document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => {
+      lang = b.dataset.l; document.querySelectorAll(".seg button").forEach((x) => x.setAttribute("aria-pressed", x === b)); render();
+    }));
+    $("vSel").addEventListener("change", render);
+    $("vCopy").addEventListener("click", () => {
+      const done = () => toast("Enlace copiado");
+      if (navigator.clipboard) navigator.clipboard.writeText($("vLink").value).then(done, () => { $("vLink").select(); document.execCommand("copy"); done(); });
+      else { $("vLink").select(); document.execCommand("copy"); done(); }
+    });
+    $("vPng").addEventListener("click", () => {
+      const v = vendors.find((x) => x.slug === $("vSel").value); if (!v) return;
+      const q = qr(linkFor(v)), n = q.getModuleCount(), m = 4, s = 24, c = document.createElement("canvas");
+      c.width = c.height = (n + m * 2) * s; const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.fillStyle = "#1a1a1a";
+      for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (q.isDark(r, k)) g.fillRect((k + m) * s, (r + m) * s, s, s);
+      c.toBlob((b) => window.ColexExport.saveBlob(b, `QR_COLEX_${v.slug}${lang === "en" ? "_EN" : ""}.png`), "image/png");
+    });
+    (async function () {
+      if (store.isDemo) $("demoFlag").hidden = false;
+      try { vendors = await store.listVendors(true); } catch (e) { vendors = []; }
+      $("vEmpty").hidden = vendors.length > 0;
+      $("vSel").innerHTML = `<option value="">${vendors.length ? "Elija su nombre…" : "Sin vendedores"}</option>` +
+        vendors.map((v) => `<option value="${v.slug}">${v.nombre.replace(/</g, "&lt;")}</option>`).join("");
+      let saved = ""; try { saved = localStorage.getItem(KEY) || ""; } catch (e) {}
+      const q = new URLSearchParams(location.search).get("v") || saved;
+      if (q && vendors.some((v) => v.slug === q)) { $("vSel").value = q; render(); }
+    })();
+  })();
+  </script>
+</body>
+</html>

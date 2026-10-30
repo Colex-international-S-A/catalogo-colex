@@ -1,0 +1,6 @@
+@supabase/supabase-js 2.45.4 MIT
+jspdf 2.5.1 MIT
+jspdf-autotable 3.8.2 MIT
+exceljs 4.4.0 MIT
+xlsx 0.18.5 Apache-2.0
+qrcode-generator 1.4.4 MIT

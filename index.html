@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Catálogo COLEX International</title>
+  <meta name="description" content="Catálogo de productos COLEX International con existencias del almacén 1060. Solicite su cotización.">
+  <meta name="theme-color" content="#242424">
+  <link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+  <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14Zm9 16-4-4"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-box" viewBox="0 0 48 48"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M24 6 40 14v20L24 42 8 34V14L24 6Zm0 0v0M8 14l16 8 16-8M24 22v20"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M9 9h10v11H9zM5 15V4h10"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></symbol>
+  </svg>
+
+  <div class="demo-flag" id="demoFlag" hidden></div>
+
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="./" aria-label="COLEX International">
+        <img class="brand-logo" src="assets/img/logo-colex.jpg" alt="COLEX International" width="226" height="84">
+        <span class="brand-text">
+          <span class="brand-sub" id="brandSub">Catálogo de productos · Almacén 1060</span>
+        </span>
+      </a>
+      <div class="top-actions">
+        <div class="lang" role="group" aria-label="Idioma / Language">
+          <button type="button" id="langEs" aria-pressed="true">ES</button>
+          <button type="button" id="langEn" aria-pressed="false">EN</button>
+        </div>
+        <button type="button" class="btn btn-primary cart-btn" id="cartBtn">
+          <svg class="icon"><use href="#i-list"/></svg>
+          <span class="label" id="cartLabel">Solicitud</span>
+          <span class="count" id="cartCount">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="advisor" id="advisor" hidden>
+    <div class="wrap">
+      <span class="advisor-avatar" id="advAvatar" aria-hidden="true"></span>
+      <span class="advisor-text"><small id="advLabel">Su asesor</small><b id="advName"></b></span>
+      <a class="btn btn-sm advisor-wa" id="advWa" target="_blank" rel="noopener" hidden>WhatsApp</a>
+    </div>
+  </div>
+
+  <section class="toolbar" aria-label="Búsqueda">
+    <div class="wrap">
+      <div class="search-row">
+        <label class="search">
+          <svg class="icon"><use href="#i-search"/></svg>
+          <span class="sr" id="searchLbl">Buscar</span>
+          <input id="q" type="search" autocomplete="off" enterkeyhint="search" aria-labelledby="searchLbl">
+        </label>
+        <select id="sub" class="select" aria-label="Subcategoría"></select>
+        <label class="check"><input type="checkbox" id="onlyStock" checked> <span id="onlyStockLbl">Solo con existencia</span></label>
+      </div>
+      <div class="chips" id="chips" role="group" aria-label="Categorías"></div>
+      <div class="chips subchips" id="subchips" hidden></div>
+    </div>
+  </section>
+
+  <main class="wrap">
+    <div class="meta">
+      <span id="count"></span>
+      <span class="stamp" id="stamp" hidden></span>
+    </div>
+    <div id="grid" class="grid" aria-live="polite"></div>
+    <div id="state" class="loading">Cargando catálogo…</div>
+    <div class="more"><button type="button" class="btn btn-ghost" id="moreBtn" hidden>Mostrar más</button></div>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap" id="foot">
+      <strong>COLEX INTERNATIONAL</strong>
+    </div>
+  </footer>
+
+  <!-- Solicitud -->
+  <div class="scrim" id="scrim" hidden></div>
+  <aside class="drawer" id="drawer" hidden aria-modal="true" role="dialog" aria-labelledby="drawerTitle">
+    <div class="drawer-head">
+      <h2 id="drawerTitle">Mi solicitud</h2>
+      <button type="button" class="x" id="drawerClose" aria-label="Cerrar"><svg class="icon"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="steps" id="steps"><span class="on"></span><span></span><span></span></div>
+
+    <div class="drawer-body" id="stepList"></div>
+
+    <div class="drawer-body" id="stepForm" hidden>
+      <form class="form" id="clientForm" novalidate>
+        <div class="field" id="f-nombre"><label for="c-nombre"></label><input id="c-nombre" name="nombre" autocomplete="name" maxlength="120" required><span class="msg"></span></div>
+        <div class="field"><label for="c-empresa"></label><input id="c-empresa" name="empresa" autocomplete="organization" maxlength="120"></div>
+        <div class="two">
+          <div class="field"><label for="c-pais"></label><input id="c-pais" name="pais" autocomplete="country-name" maxlength="60"></div>
+          <div class="field" id="f-telefono"><label for="c-telefono"></label><input id="c-telefono" name="telefono" type="tel" autocomplete="tel" maxlength="40" required><span class="msg"></span></div>
+        </div>
+        <div class="field" id="f-correo"><label for="c-correo"></label><input id="c-correo" name="correo" type="email" autocomplete="email" maxlength="120"><span class="msg"></span></div>
+        <div class="field"><label for="c-comentarios"></label><textarea id="c-comentarios" name="comentarios" maxlength="600"></textarea></div>
+        <div class="alert" id="formErr" hidden></div>
+      </form>
+    </div>
+
+    <div class="drawer-body" id="stepDone" hidden>
+      <div class="done">
+        <span class="tick"><svg class="icon" style="width:34px;height:34px"><use href="#i-check"/></svg></span>
+        <h3 id="doneTitle"></h3>
+        <span class="notice" id="folioLbl"></span>
+        <span class="folio" id="folio"></span>
+        <p id="doneText"></p>
+        <div style="display:grid;gap:10px;width:100%;max-width:320px">
+          <button type="button" class="btn btn-navy btn-block" id="dlPdf"><svg class="icon"><use href="#i-down"/></svg><span></span></button>
+          <button type="button" class="btn btn-navy btn-block" id="dlXlsx"><svg class="icon"><use href="#i-down"/></svg><span></span></button>
+        </div>
+        <a class="btn btn-block advisor-wa" id="waAdvisor" style="max-width:320px;margin-left:0" target="_blank" rel="noopener" hidden></a>
+        <div class="alert" id="dlErr" hidden></div>
+      </div>
+    </div>
+
+    <div class="drawer-foot" id="drawerFoot"></div>
+  </aside>
+
+  <!-- Ficha ampliada -->
+  <div class="scrim" id="mScrim" hidden></div>
+  <div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-label="Producto"></div>
+
+  <div class="toast" id="toast" hidden role="status"></div>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/i18n.js"></script>
+  <script src="assets/vendor/supabase.js"></script>
+  <script src="assets/js/store.js"></script>
+  <script src="assets/js/export.js"></script>
+  <script src="assets/js/search.js"></script>
+  <script src="assets/js/catalog.js"></script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Panel COLEX</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#242424">
+  <link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+  <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body class="admin">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14Zm9 16-4-4"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-box" viewBox="0 0 48 48"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M24 6 40 14v20L24 42 8 34V14L24 6Zm0 0v0M8 14l16 8 16-8M24 22v20"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></symbol>
+  </svg>
+
+  <div class="demo-flag" id="demoFlag" hidden>Modo demostración: los cambios se guardan solo en este navegador. Configure Supabase para guardarlos en línea.</div>
+
+  <!-- Acceso -->
+  <section class="login" id="loginView" hidden>
+    <form class="login-card" id="loginForm" novalidate>
+      <header>
+        <img class="brand-logo" src="assets/img/logo-colex.jpg" alt="COLEX International" width="226" height="84">
+        <span class="brand-text"><span class="brand-sub">Panel administrativo</span></span>
+      </header>
+      <div class="body">
+        <div class="field" id="lWhoWrap" hidden><label for="lWho">¿Quién entra?</label><select id="lWho"></select></div>
+        <div class="field" id="lEmailWrap"><label for="lEmail">Correo</label><input id="lEmail" type="email" autocomplete="username" required></div>
+        <div class="field" id="lPassWrap"><label for="lPass">Contraseña</label><input id="lPass" type="password" autocomplete="current-password" required></div>
+        <div class="alert" id="lErr" hidden></div>
+        <button class="btn btn-primary btn-block" id="lBtn" type="submit">Entrar</button>
+        <p class="small" id="lHint" hidden></p>
+      </div>
+    </form>
+  </section>
+
+  <!-- Panel -->
+  <div id="appView" hidden>
+    <header class="topbar">
+      <div class="wrap">
+        <a class="brand" href="./" target="_blank" rel="noopener">
+          <img class="brand-logo" src="assets/img/logo-colex.jpg" alt="COLEX International" width="226" height="84">
+          <span class="brand-text"><span class="brand-sub">Panel administrativo · Almacén 1060</span></span>
+        </a>
+        <div class="top-actions">
+          <span class="small hide-sm" id="who" hidden></span>
+          <a class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,.35)" id="myLink" href="vendedores.html" target="_blank" rel="noopener" hidden>Mi enlace y QR</a>
+          <a class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,.35)" href="./" target="_blank" rel="noopener">Ver catálogo</a>
+          <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,.35)" id="logout" type="button">Salir</button>
+        </div>
+      </div>
+    </header>
+    <nav class="tabs" aria-label="Secciones">
+      <div class="wrap" role="tablist">
+        <button class="tab" role="tab" data-tab="inv" aria-selected="true">Inventario</button>
+        <button class="tab stock-only" role="tab" data-tab="mov" aria-selected="false">Movimientos</button>
+        <button class="tab" role="tab" data-tab="sol" aria-selected="false">Solicitudes <span class="pill nueva" id="newReqs" hidden></span></button>
+        <button class="tab" role="tab" data-tab="imp" aria-selected="false">Importar Excel</button>
+        <button class="tab" role="tab" data-tab="apr" aria-selected="false" hidden>Autorizaciones <span class="pill nueva" id="aprCount" hidden></span></button>
+        <button class="tab" role="tab" data-tab="cfg" aria-selected="false">Ajustes y QR</button>
+      </div>
+    </nav>
+
+    <div class="req-alert" id="reqAlert" hidden role="status" aria-live="polite">
+      <div class="wrap">
+        <span class="bell" aria-hidden="true"></span>
+        <span id="reqAlertText"></span>
+        <button type="button" class="btn btn-primary btn-sm" id="reqAlertGo">Ver solicitudes</button>
+        <button type="button" class="x" id="reqAlertX" aria-label="Cerrar aviso"><svg class="icon"><use href="#i-x"/></svg></button>
+      </div>
+    </div>
+
+    <!-- INVENTARIO -->
+    <main class="wrap panel" data-panel="inv">
+      <div class="kpis" id="kpis"></div>
+      <div class="bar">
+        <label class="search"><svg class="icon"><use href="#i-search"/></svg><span class="sr">Buscar</span>
+          <input id="invQ" type="search" placeholder="Buscar por código SAP o descripción" autocomplete="off"></label>
+        <select id="invCat" class="select" aria-label="Categoría"></select>
+        <select id="invFilter" class="select" aria-label="Filtro">
+          <option value="">Todos los productos</option>
+          <option value="stock">Con existencia</option>
+          <option value="zero">Agotados</option>
+          <option value="soldToday">Con ventas hoy</option>
+          <option value="noimg">Sin imagen</option>
+          <option value="inactive">Ocultos del catálogo</option>
+          <option value="noen">Sin traducción al inglés</option>
+        </select>
+        <button class="btn btn-navy" id="newProd" type="button">+ Nuevo producto</button>
+      </div>
+      <div class="box">
+        <div class="table-wrap">
+          <table class="t">
+            <thead><tr><th></th><th>Código SAP</th><th>Descripción</th><th class="hide-sm">Categoría</th><th class="r stock-only">Vendido hoy</th><th class="r stock-only">Queda</th><th class="r">Acciones</th></tr></thead>
+            <tbody id="invBody"></tbody>
+          </table>
+        </div>
+        <div class="box-body" style="padding-top:10px"><div class="bar"><span class="small" id="invCount"></span><button class="btn btn-ghost btn-sm" id="invMore" type="button" hidden>Mostrar más</button></div></div>
+      </div>
+    </main>
+
+    <!-- MOVIMIENTOS -->
+    <main class="wrap panel" data-panel="mov" hidden>
+      <div class="bar">
+        <div class="field"><label for="movFrom">Desde</label><input id="movFrom" type="date"></div>
+        <div class="field"><label for="movTo">Hasta</label><input id="movTo" type="date"></div>
+        <div class="field" style="flex:1 1 240px"><label for="movQ">Código o descripción</label><input id="movQ" type="search" autocomplete="off"></div>
+        <div class="field"><label for="movType">Tipo</label><select id="movType"><option value="">Todos</option><option value="venta">Ventas</option><option value="entrada">Entradas</option><option value="ajuste">Ajustes</option><option value="importacion">Importación</option></select></div>
+      </div>
+      <div class="kpis" id="movKpis"></div>
+      <div class="box">
+        <div class="table-wrap"><table class="t">
+          <thead><tr><th>Fecha</th><th>Código SAP</th><th>Descripción</th><th>Tipo</th><th class="r">Cantidad</th><th class="r">Antes</th><th class="r">Queda</th><th class="hide-sm">Nota</th><th class="hide-sm">Usuario</th></tr></thead>
+          <tbody id="movBody"></tbody>
+        </table></div>
+      </div>
+    </main>
+
+    <!-- SOLICITUDES -->
+    <main class="wrap panel" data-panel="sol" hidden>
+      <div class="kpis" id="solKpis"></div>
+      <div class="bar">
+        <select id="solVend" class="select" aria-label="Vendedor"><option value="">Todos los vendedores</option></select>
+        <select id="solState" class="select" aria-label="Estado"><option value="abiertas" selected>Pendientes (nuevas y en cotización)</option><option value="nueva">Nuevas</option><option value="cotizando">En cotización</option><option value="concretada">Venta concretada</option><option value="cancelada">Canceladas</option><option value="">Todas</option></select>
+        <label class="check"><input type="checkbox" id="soundOn" checked> Aviso con sonido</label>
+        <span class="small" id="watchInfo">Las solicitudes nuevas aparecen solas: el panel revisa cada 30 segundos.</span>
+      </div>
+      <div class="box">
+        <div class="table-wrap"><table class="t">
+          <thead><tr><th>N.º</th><th>Fecha</th><th>Cliente</th><th class="hide-sm">Empresa</th><th class="hide-sm">Teléfono</th><th>Vendedor</th><th class="r">Productos</th><th>Estado</th><th></th></tr></thead>
+          <tbody id="solBody"></tbody>
+        </table></div>
+      </div>
+    </main>
+
+    <!-- IMPORTAR -->
+    <main class="wrap panel" data-panel="imp" hidden>
+      <div class="box stock-only">
+        <div class="box-head"><h2>Actualizar existencias desde Excel</h2>
+          <button class="btn btn-ghost btn-sm" id="tplBtn" type="button"><svg class="icon"><use href="#i-down"/></svg>Descargar plantilla con existencias actuales</button></div>
+        <div class="box-body">
+          <p class="small" style="margin:0">Sirve el Excel exportado de SAP Business One (almacén 1060) o la plantilla de este panel. El archivo necesita una columna con el <b>código SAP</b> y otra con la <b>existencia</b>. Antes de aplicar verá qué cambia.</p>
+          <label class="dropzone" id="drop"><input type="file" id="impFile" accept=".xlsx,.xls,.csv" hidden>
+            <b>Elegir archivo</b> o arrastrarlo aquí<br><span class="small">.xlsx, .xls o .csv</span></label>
+          <div id="impMap" hidden class="bar"></div>
+          <div id="impResult"></div>
+        </div>
+      </div>
+      <div class="box">
+        <div class="box-head"><h2>Agregar un catálogo nuevo (Excel con fotos)</h2></div>
+        <div class="box-body">
+          <p class="small" style="margin:0">Sirve para catálogos con el mismo formato que los de COLEX: columnas <b>Imagen</b>, <b>Referencia</b> (código SAP), <b>Producto</b>, <b>Disponible</b> y <b>Subrubro</b>, con las fotos pegadas en la fila de cada producto. Cada hoja del Excel puede ir a una categoría existente o a una nueva. Antes de agregar verá qué productos son nuevos y cuáles ya existen.</p>
+          <label class="dropzone" id="catDrop"><input type="file" id="catFile" accept=".xlsx" hidden>
+            <b>Elegir catálogo en Excel</b> o arrastrarlo aquí<br><span class="small">.xlsx con fotos</span></label>
+          <div id="catResult"></div>
+        </div>
+      </div>
+      <div class="box" id="seedBox" hidden>
+        <div class="box-head"><h2>Carga inicial del catálogo</h2></div>
+        <div class="box-body">
+          <p class="small" style="margin:0">La base de datos está vacía. Este paso copia los 1.743 productos de los catálogos Excel (descripciones en español e inglés, categorías, existencias e imágenes) a la base de datos. Se hace una sola vez.</p>
+          <div><button class="btn btn-primary" id="seedBtn" type="button">Cargar catálogo inicial</button></div>
+          <div id="seedMsg" class="small"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- AUTORIZACIONES -->
+    <main class="wrap panel" data-panel="apr" hidden>
+      <p class="small" id="aprHelp" style="margin:0"></p>
+      <div class="box">
+        <div class="table-wrap"><table class="t">
+          <thead><tr><th>Fecha</th><th>Pedido por</th><th>Qué se pide</th><th>Estado</th><th></th></tr></thead>
+          <tbody id="aprBody"></tbody>
+        </table></div>
+      </div>
+    </main>
+
+    <!-- AJUSTES -->
+    <main class="wrap panel" data-panel="cfg" hidden>
+      <div class="box" id="teamBox" hidden>
+        <div class="box-head"><h2>Equipo del panel</h2></div>
+        <div class="box-body">
+          <p class="small" style="margin:0"><b>Administrador principal:</b> control total. <b>Administrador:</b> edita productos, importa catálogos y atiende solicitudes; para eliminar productos o cambiar vendedores y ajustes pide autorización al administrador principal. <b>Subadministrador:</b> atiende solicitudes y descarga el QR. <b>Vendedores:</b> entran con su nombre y solo ven y siguen sus propias solicitudes.</p>
+          <form class="bar" id="tForm" novalidate style="align-items:flex-end">
+            <div class="field" style="flex:1 1 200px"><label for="tNom">Nombre</label><input id="tNom" maxlength="60"></div>
+            <div class="field"><label for="tRol">Rol</label><select id="tRol"><option value="admin">Administrador</option><option value="subadmin">Subadministrador</option></select></div>
+            <div class="field" style="flex:1 1 200px"><label for="tMail">Correo <span class="small">(para cuando haya contraseñas)</span></label><input id="tMail" type="email" maxlength="120"></div>
+            <button class="btn btn-primary" type="submit">Agregar</button>
+          </form>
+          <div class="alert" id="tErr" hidden></div>
+          <div class="table-wrap"><table class="t">
+            <thead><tr><th>Nombre</th><th>Rol</th><th class="hide-sm">Correo</th><th>Estado</th><th></th></tr></thead>
+            <tbody id="tBody"></tbody>
+          </table></div>
+        </div>
+      </div>
+      <div class="box" id="cfgBox">
+        <div class="box-head"><h2>Datos que ve el cliente</h2></div>
+        <form class="box-body" id="cfgForm">
+          <div class="two">
+            <div class="field stock-only"><label for="cfgFecha">Fecha de las existencias</label><input id="cfgFecha" type="date"></div>
+            <div class="field"><label for="cfgTel">Teléfono</label><input id="cfgTel" maxlength="40"></div>
+          </div>
+          <div class="two">
+            <div class="field"><label for="cfgWa">WhatsApp</label><input id="cfgWa" maxlength="40" placeholder="+507 6000-0000"></div>
+            <div class="field"><label for="cfgMail">Correo de ventas</label><input id="cfgMail" type="email" maxlength="120"></div>
+          </div>
+          <div class="field"><label for="cfgDir">Dirección</label><input id="cfgDir" maxlength="200"></div>
+          <div class="two">
+            <div class="field"><label for="cfgAvEs">Aviso al pie (español)</label><textarea id="cfgAvEs" maxlength="300"></textarea></div>
+            <div class="field"><label for="cfgAvEn">Aviso al pie (inglés)</label><textarea id="cfgAvEn" maxlength="300"></textarea></div>
+          </div>
+          <div class="bar"><button class="btn btn-primary" type="submit">Guardar ajustes</button><span class="small" id="cfgMsg"></span></div>
+        </form>
+      </div>
+      <div class="box" id="vendBox">
+        <div class="box-head"><h2>Vendedores</h2>
+          <a class="btn btn-ghost btn-sm" href="vendedores.html" target="_blank" rel="noopener">Abrir página de vendedores</a></div>
+        <div class="box-body">
+          <p class="small" style="margin:0">Cada vendedor tiene su propio enlace y QR en la página <b>vendedores.html</b>. Los clientes que entran por ese enlace ven a su asesor, y sus solicitudes llegan a nombre de ese vendedor.</p>
+          <form class="bar" id="vForm" novalidate style="align-items:flex-end">
+            <div class="field" style="flex:1 1 200px"><label for="vNom">Nombre del vendedor</label><input id="vNom" maxlength="60" placeholder="Nombre y apellido"></div>
+            <div class="field" style="flex:1 1 160px"><label for="vWaIn">WhatsApp</label><input id="vWaIn" maxlength="30" placeholder="+507 6000-0000"></div>
+            <div class="field" style="flex:1 1 200px"><label for="vMail">Correo</label><input id="vMail" type="email" maxlength="120"></div>
+            <button class="btn btn-primary" type="submit" id="vAdd">Agregar</button>
+          </form>
+          <div class="alert" id="vErr" hidden></div>
+          <div class="table-wrap"><table class="t">
+            <thead><tr><th>Vendedor</th><th>WhatsApp</th><th class="hide-sm">Correo</th><th>Enlace</th><th class="r">Solicitudes · ventas</th><th></th></tr></thead>
+            <tbody id="vBody"></tbody>
+          </table></div>
+        </div>
+      </div>
+      <div class="box">
+        <div class="box-head"><h2>Código QR del catálogo</h2></div>
+        <div class="box-body qrbox">
+          <div class="qr" id="qr"></div>
+          <div style="display:grid;gap:12px">
+            <div class="field"><label for="qrUrl">Dirección del catálogo</label><input id="qrUrl" type="url"></div>
+            <div class="bar">
+              <button class="btn btn-navy" id="qrPng" type="button"><svg class="icon"><use href="#i-down"/></svg>Descargar PNG</button>
+              <button class="btn btn-ghost" id="qrSvg" type="button"><svg class="icon"><use href="#i-down"/></svg>Descargar SVG (imprenta)</button>
+            </div>
+            <p class="small" style="margin:0">El QR apunta a una dirección fija. Aunque cambien las existencias, las imágenes o los productos, el mismo QR sigue sirviendo. Agregue <b>?lang=en</b> al final para un QR que abra el catálogo en inglés.</p>
+          </div>
+        </div>
+      </div>
+      <div class="box" id="demoBox" hidden>
+        <div class="box-head"><h2>Demostración</h2></div>
+        <div class="box-body"><div><button class="btn btn-danger" id="resetDemo" type="button">Borrar cambios de demostración</button></div></div>
+      </div>
+    </main>
+  </div>
+
+  <div class="scrim" id="scrim" hidden></div>
+  <div class="adm-modal" id="modal" hidden role="dialog" aria-modal="true"></div>
+  <div class="toast" id="toast" hidden role="status"></div>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/i18n.js"></script>
+  <script src="assets/vendor/supabase.js"></script>
+  <script src="assets/js/store.js"></script>
+  <script src="assets/js/export.js"></script>
+  <script src="assets/vendor/qrcode.js"></script>
+  <script src="assets/js/xlsx-images.js"></script>
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>
